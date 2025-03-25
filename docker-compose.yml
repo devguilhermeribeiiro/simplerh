@@ -17,19 +17,24 @@ services:
     container_name: simple_rh_php
     volumes:
       - .:/var/www/simple_rh
+    env_file:
+      - .env
     depends_on:
       - db
 
   db:
-    image: postgres:latest
+    image: mysql:latest
     container_name: simple_rh_db
     restart: always
-    env_file:
-        - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     ports:
-      - "5432:5432"
+      - "3306:3306"
 
 volumes:
-  pgdata:
+  mysql_data:
