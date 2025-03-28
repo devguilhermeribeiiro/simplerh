@@ -42,7 +42,6 @@ class Database
                 throw new \Exception("Erro ao conectar ao banco de dados" . $this->_conn->connect_error);
             }
 
-            echo "Conectado ao banco de dados com sucesso!";
             return $this->_conn;
         } catch (\Exception $e) {
             die($e->getMessage());
