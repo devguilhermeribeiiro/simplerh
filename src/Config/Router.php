@@ -39,27 +39,35 @@ class Router
 
     public static function run()
     {
-        $parsed_url = $_SERVER['REQUEST_URI'];
+        $parsed_url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $request_method = $_SERVER['REQUEST_METHOD'];
 
         foreach (self::$_routes as $route) {
 
-            if (is_callable($route['callback'])) {
-                call_user_func($route['callback']);
+            $route_pattern = '#^' . preg_replace('/\{([\w]+)\}/', '([^/]+)', $route['path']) . '$#';
+            $url_params = [];
 
-            } elseif (str_contains($route['callback'], '@')) {
-                [$route['controller'], $route['action']] = explode('@', $route['callback']);
+            if ($route['method'] === $request_method && preg_match($route_pattern, $parsed_url, $url_params)) {
 
-                $controller = 'App\\Controllers\\' . $route['controller'];
+                array_shift($url_params);
 
-                if ($route['method'] === $request_method && $route['path'] === $parsed_url) {
-                    call_user_func_array(
-                        [ $controller, $route['action'] ],
-                        []
-                    );
+                if (is_callable($route['callback'])) {
+                    call_user_func_array($route['callback'], $url_params);
+                    return;
+
+                } elseif (str_contains($route['callback'], '@')) {
+                    [$route['controller'], $route['action']] = explode('@', $route['callback']);
+
+                    $controller = 'App\\Controllers\\' . $route['controller'];
+                    $controller_instance = new $controller();
+
+                    call_user_func_array([ $controller_instance, $route['action'] ], $url_params);
+                    return;
                 }
             }
-
         }
+
+        http_response_code(404);
+        echo "Page not found";
     }
 }
